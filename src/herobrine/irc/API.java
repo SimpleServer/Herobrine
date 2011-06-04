@@ -1,26 +1,22 @@
 package herobrine.irc;
 
+import static herobrine.Logger.error;
+import static herobrine.Logger.info;
+import static herobrine.Logger.warning;
+import static herobrine.irc.Format.CTCP;
+import static herobrine.irc.Room.room;
 import herobrine.Config;
 import herobrine.services.Service;
 
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.PriorityQueue;
-import java.util.Queue;
 import java.util.Set;
 
 import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
-import org.reflections.util.*;
-
-import static herobrine.irc.Format.*;
-import static herobrine.irc.Person.person;
-import static herobrine.irc.Room.room;
-import static herobrine.Logger.*;
 
 public class API implements ConnectionHandler {
 
@@ -67,7 +63,7 @@ public class API implements ConnectionHandler {
     connection = new Connection(server, port, nick);
     connection.observe(this);
 
-    flushBuffer();
+    flush();
 
     handlers.put("PRIVMSG", new CommandHandler() {
       public void handle() {
@@ -108,13 +104,6 @@ public class API implements ConnectionHandler {
     return nick;
   }
 
-  private void flushBuffer() {
-    while (commandBuffer.size() > 0) {
-      Command command = commandBuffer.poll();
-      connection.send(command.command());
-    }
-  }
-
   private void loadServices() {
     Reflections r = new Reflections("herobrine", new SubTypesScanner());
     Set<Class<? extends Service>> services = r.getSubTypesOf(Service.class);
@@ -145,10 +134,15 @@ public class API implements ConnectionHandler {
     String[] parts = line.split(" ");
     String cmd = parts[1];
     if (handlers.containsKey(cmd)) {
-      handlers.get(cmd).handle(line);
+      try {
+        handlers.get(cmd).handle(line);
+      } catch (Exception e) {
+        error("Error parsing command '" + cmd + "'");
+        if (Config.config().getBoolean("debug")) e.printStackTrace();
+      }
     }
 
-    flushBuffer();
+    flush();
   }
 
   public void ready() {
@@ -175,6 +169,13 @@ public class API implements ConnectionHandler {
   }
 
   /* API Actions */
+
+  public void flush() {
+    while (commandBuffer.size() > 0) {
+      Command command = commandBuffer.poll();
+      connection.send(command.command());
+    }
+  }
 
   public void authenticate(String password) {
     send("NICKSERV IDENTIFY", password);
