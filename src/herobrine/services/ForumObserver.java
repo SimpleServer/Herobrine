@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
 
 public class ForumObserver extends Service {
   private static final String URL = "http://www.minecraftforum.net/topic/%s-/page__view__getlastpost";
-  private static final Pattern POST_ID = Pattern.compile(".*#entry(.*)");
+  private static final Pattern POST_ID = Pattern.compile(".*pid__(\\d*)__st.*");
   private static final int THREAD = 309373;
   private static final int DELAY = 30 * 1000;
 
@@ -53,19 +53,15 @@ public class ForumObserver extends Service {
     }
 
     public int getLatestPost(int thread) throws Exception {
-      String url = String.format(URL, thread);
-      url = getLocation(url);
-      url = getLocation(url);
-      Matcher matcher = POST_ID.matcher(url);
+      Matcher matcher = POST_ID.matcher(getLocation(String.format(URL, thread)));
       if (!matcher.matches()) throw new Exception();
       return Integer.parseInt(matcher.group(1));
     }
 
     private String getLocation(String url) throws MalformedURLException, IOException {
       URLConnection connection = new URL(url).openConnection();
-      ((HttpURLConnection) connection).setInstanceFollowRedirects(false);
-      return connection.getHeaderField("Location");
+      ((HttpURLConnection) connection).setInstanceFollowRedirects(true);
+      return connection.getHeaderField("X-URL");
     }
-
   }
 }
