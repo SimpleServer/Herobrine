@@ -1,0 +1,10 @@
+/bin/
+/config.txt
+/tmp/
+/Herobrine.jar
+*.orig
+*~
+*.BASE.*
+*.BACKUP.*
+*.LOCAL.*
+*.class
