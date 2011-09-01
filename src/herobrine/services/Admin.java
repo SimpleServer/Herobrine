@@ -11,8 +11,7 @@ public class Admin extends Service {
     if (source.name().equals(config.get("owner"))) {
       if (message.equals("quit")) {
         api.disconnect();
-        if (config.contains("quit")) api.send(-10, "QUIT", config.get("quit"));
-        else api.send(-10, "QUIT");
+        api.quit();
       }
     }
   }

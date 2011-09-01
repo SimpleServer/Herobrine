@@ -9,6 +9,9 @@
         <attribute name="Class-Path" value="."/>
       </manifest>
 
+      <fileset dir=".">
+    	<include name="scripts/*.sh"/>
+      </fileset>
       <fileset dir="bin"/>
       <zipfileset excludes="META-INF/**" src="lib/dom4j-1.6.jar"/>
       <zipfileset excludes="META-INF/**" src="lib/guava-r07.jar"/>
@@ -16,6 +19,7 @@
       <zipfileset excludes="META-INF/**" src="lib/reflections-0.9.5-RC2.jar"/>
       <zipfileset excludes="META-INF/**" src="lib/slf4j-api-1.6.1.jar"/>
       <zipfileset excludes="META-INF/**" src="lib/slf4j-nop-1.6.1.jar"/>
+        <zipfileset excludes="META-INF/**" src="lib/json-java.jar"/>
     </jar>
   </target>
 

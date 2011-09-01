@@ -7,6 +7,7 @@ import static herobrine.irc.Format.CTCP;
 import static herobrine.irc.Room.room;
 import herobrine.Config;
 import herobrine.services.Service;
+import herobrine.utils.Bitly;
 
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -14,6 +15,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
@@ -21,6 +24,8 @@ import org.reflections.scanners.SubTypesScanner;
 public class API implements ConnectionHandler {
 
   private Connection connection;
+  private Timer timer;
+  private Bitly bitly;
 
   private HashMap<String, CommandHandler> handlers = new HashMap<String, CommandHandler>();
   private List<Service> services = new ArrayList<Service>();
@@ -56,14 +61,15 @@ public class API implements ConnectionHandler {
       port = 6667;
     }
 
+    timer = new Timer();
+    if (config.contains("bitlyUser") && config.contains("bitlyKey")) {
+      bitly = new Bitly(config.get("bitlyUser"), config.get("bitlyKey"));
+    } else {
+      warning("No bit.ly credentials set");
+    }
+
     info("Loading services");
     loadServices();
-
-    info("Establishing connection");
-    connection = new Connection(server, port, nick);
-    connection.observe(this);
-
-    flush();
 
     handlers.put("PRIVMSG", new CommandHandler() {
       public void handle() {
@@ -94,6 +100,12 @@ public class API implements ConnectionHandler {
         }
       }
     });
+
+    info("Establishing connection");
+    connection = new Connection(server, port, nick);
+    connection.observe(this);
+
+    flush();
   }
 
   public void listen(Service service) {
@@ -151,10 +163,12 @@ public class API implements ConnectionHandler {
     }
   }
 
-  public void cleanup() {
+  public synchronized void cleanup() {
+    timer.cancel();
     for (Service service : services) {
       service.cleanup();
     }
+    notify();
   }
 
   public static String join(String[] parts) {
@@ -224,4 +238,20 @@ public class API implements ConnectionHandler {
     connection.disconnect();
   }
 
+  public void schedule(TimerTask task) {
+    timer.schedule(task, 100, Config.config().getInt("delay") * 1000);
+  }
+
+  public String shorten(String url) {
+    try {
+      return bitly.shorten(url);
+    } catch (Exception e) {
+      return url;
+    }
+  }
+
+  public void quit() {
+    if (Config.config().contains("quit")) send(-10, "QUIT", Config.config().get("quit"));
+    else send(-10, "QUIT");
+  }
 }

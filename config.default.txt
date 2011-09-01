@@ -2,6 +2,7 @@ server=
 port=6667
 nick=
 password=
+delay=30
 debug=false
 owner=
 room=#bots

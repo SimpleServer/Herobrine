@@ -9,7 +9,13 @@ import herobrine.irc.API;
  * http://sam.zoy.org/wtfpl/COPYING for more details. */
 
 public class Main {
-  public static void main(String[] args) {
-    API api = new API();
+  public static void main(String[] args) throws InterruptedException {
+    while (true) {
+      API api = new API();
+      synchronized (api) {
+        api.wait();
+        api.wait(5000);
+      }
+    }
   }
 }
